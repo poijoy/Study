@@ -201,26 +201,40 @@ int memory[256];
 int reg[16]; // note: "register" is a reserved word
 int pc, ir, used;
 
-void loadprogram(), fetch();
+void getprogram(), print_results();
+int mask_variable(int mask,unsigned int value), opcode(int value);
 
 class instruction_class{
     private:
-        int instruction;
+        int command;
+        int opcode;
+        int regno;
+        int operand;
     public:
-
+        void loaddata(int ref);
+        void calculate();
+        void print(int i);
 };
 
+instruction_class instruction;
+
 int main(){
-    loadprogram();
-    fetch();
+    int i;
+    getprogram();
+    for (i = 0; i < pc; i++){
+        instruction.loaddata(memory[i]);
+        instruction.calculate();
+        instruction.print(i);
+    }
 }
 
+/////////////////////////////////functions//////////////////////////////////////////
 //load the program from a text file into memory
 //this will take up as many memory addresses as there are lines of text,create a global 'used' variable so we can check that the instructions being passed do not include any addresses that are in use already
 //also for error checking if there is no E (halt) but lines have run out
 //given that the first digit is used for opcode and second for the register address, is this the right place to convert from hex to decimal? - yes, not allowed to read strings outside of the file name
-void loadprogram(){
-    int hexnumber, i;
+void getprogram(){
+    int i;
     string filename;
     fstream program;
     cout << "Enter the file name of the MASSEY machine code: " << endl;
@@ -231,35 +245,123 @@ void loadprogram(){
         cout << "ERROR: not able to open " << filename << endl;
     } else {
         i = 0;
-        while (program >> hex >> hexnumber) {
-            memory[i] = hexnumber;
-            if (memory[i] > 15){
-                cout << uppercase << hex << memory[i] << endl;
-            }
+        while (program >> hex >> ir) {
+            memory[i] = ir;
+            //cout << "hexnumber: " << hexnumber << endl;
+            cout << "Memory[" << i << "] = ";
+            cout.fill('0'); 
+            cout.width(4);
+            cout << right << uppercase << hex << ir << endl;
+            // instruction.loaddata(ir);
+            //cout << "Memory: " << memory[i] << endl;
             i++; 
         }
-        used = i;
-        pc = 0; //set the program counter to 0 as soon as it is loaded, is there any point in this or do I use other bits to check?
+        pc = i;
+        cout << "used: " << pc << endl;
+        // cout << "Memory: " << memory[5] << endl;
     }    
 }
 
-//fetch instruction from memory sequentially (except for a jump/goto 'D', lookout for D) /// think this sectiopn is not needed
-void fetch(){
-    int i;
-    for (i=0; i < used; i++){
-        pc = i;
+//get the value from each column, 0 to ignore, 1 to retrieve
+int mask_variable(int mask,unsigned int value){
+    int temp;
+    temp = value & mask;
+    return temp;
+}
 
-        cout << "PC: " << pc << "IR: " << memory[i] << "Register R" << ""/*register number in here*/ << " = "  << /*register contents*/ endl;
-        //Expected output - PC: 00 IR: 100A Register R0 = 000A
+////////instruction class methods//////////////////////////
+void instruction_class::loaddata(int command){
+    ///command = memory[ref];
+    //cout << "memory is: " << memory[ref] << endl;
+    //cout << "command is " << command << endl;
+    opcode = mask_variable(0xF000, command) >> 12;
+    if ((opcode != 2) and (opcode != 7)){
+        regno = mask_variable(0x0F00, command) >> 8;
+        operand = mask_variable(0x00FF, command);
+    }
+    else{
+        opcode = mask_variable(0xFF00, command) >> 8;
+        regno = mask_variable(0x0F0, command) >> 4;
+        operand = mask_variable(0x000F, command);
+    }
+    cout << "opcode is " << opcode << endl;
+    cout << "regno is " << regno << endl;
+    cout << "operand is " << operand << endl;
+}
+
+void instruction_class::calculate(){ //////////////////////how tf do I bring the current objewct into the method??
+    switch (opcode){
+        //Load Register with value (last 2 digits as hex)
+        case 1: if (opcode == 1){
+            reg[regno] = operand;
+            break;
+        }
+        //Load Register with value from other register value
+        case 2: if (opcode == 2){
+            break;
+        }
+        //Load Register with value from memoy address
+        case 3: if (opcode == 3){
+            break;
+        }
+        //Store value from register to memory address
+        case 4: if (opcode == 4){
+            break;
+        }
+        //Add values from 2 registers into a third register location (integer addition, use this one)
+        case 6: if (opcode == 6){
+            break;
+        }
+        //Negate value in register (compliment and +1)
+        case 7: if (opcode == 7){
+            break;
+        }
+        //Shift register right
+        case 8: if (opcode == 8){
+            break;
+        }
+        //Shift register left
+        case 9: if (opcode == 9){
+            break;
+        }
+        //AND results of binary AND into third register
+        case 10: if (opcode == 0xA){
+            break;
+        }
+        //OR results of binary OR into third register
+        case 11: if (opcode == 0xB){
+            break;
+        }
+        //XOR results of binary XOR into third register
+        case 12: if (opcode == 0xC){
+            break;
+        }
+        //Jump to PC[] if X matches Y
+        case 13: if (opcode == 0xD){
+            break;
+        }
+        //Exit
+        case 14: if (opcode == 0xE){
+            break;
+        }
     }
 }
-//identify the opcode
-//need to break this into binary, then read the left-most 4 digits, or convert to hex, read left 1 digit. use >>hex>> to do this? DO NOT USE A STRING! could use shift right and then read the results after filling everything else with 0, but that seems wierd to do when creating a machine code program
 
-
-//identify the operand
-//Again, need to convert to hex, read the values, then translate back to binary. This might be something that depends on the opcode though as they may have different values in that case
-
-//pass operand to relevant function based on opcode
-
-//execute function
+void instruction_class::print(int i){
+    int i;
+    //for (i = 0; i < pc; i++){
+        ir = memory[i];
+        cout << "PC: ";
+        cout.fill('0'); 
+        cout.width(2);
+        cout << right << pc;
+        cout << " IR: ";
+        cout.fill('0'); 
+        cout.width(4);
+        cout << right << memory[i] << "  Register R" << i << " = " ;
+        cout.fill('0'); 
+        cout.width(4);
+        cout << right << reg[i]  << endl;
+        //Expected output - PC: 00 IR: 100A Register R0 = 000A
+    ////}
+}

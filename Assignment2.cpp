@@ -213,18 +213,20 @@ class instruction_class{
     public:
         void loaddata(int ref);
         void calculate();
-        void print(int i);
+        void print(int count);
 };
 
 instruction_class instruction;
 
-int main(){
+int main(){ // use pc instead of an i counter or it'll run through every line even if there is a jump
     int i;
     getprogram();
     for (i = 0; i < pc; i++){
+        cout << "PC is " << pc << endl;
         instruction.loaddata(memory[i]);
         instruction.calculate();
         instruction.print(i);
+        i++;
     }
 }
 
@@ -238,8 +240,8 @@ void getprogram(){
     string filename;
     fstream program;
     cout << "Enter the file name of the MASSEY machine code: " << endl;
-    //cin >> filename;
-    filename = "test.txt";////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////swap these lines over after testing
+    cin >> filename;
+    //filename = "test.txt";////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////swap these lines over after testing
     program.open(filename.c_str(), fstream::in);
     if (program.is_open() == false) {
         cout << "ERROR: not able to open " << filename << endl;
@@ -248,7 +250,10 @@ void getprogram(){
         while (program >> hex >> ir) {
             memory[i] = ir;
             //cout << "hexnumber: " << hexnumber << endl;
-            cout << "Memory[" << i << "] = ";
+            cout << "Memory[";
+            cout.fill('0'); 
+            cout.width(2);
+            cout << right << i << "] = ";
             cout.fill('0'); 
             cout.width(4);
             cout << right << uppercase << hex << ir << endl;
@@ -257,7 +262,7 @@ void getprogram(){
             i++; 
         }
         pc = i;
-        cout << "used: " << pc << endl;
+        //cout << "used: " << pc << endl;
         // cout << "Memory: " << memory[5] << endl;
     }    
 }
@@ -284,73 +289,108 @@ void instruction_class::loaddata(int command){
         regno = mask_variable(0x0F0, command) >> 4;
         operand = mask_variable(0x000F, command);
     }
-    cout << "opcode is " << opcode << endl;
-    cout << "regno is " << regno << endl;
-    cout << "operand is " << operand << endl;
+//     cout << "opcode is " << opcode << endl;
+//     cout << "regno is " << regno << endl;
+//     cout << "operand is " << operand << endl;
 }
 
 void instruction_class::calculate(){ //////////////////////how tf do I bring the current objewct into the method??
+    int reg1, reg2;
     switch (opcode){
         //Load Register with value (last 2 digits as hex)
         case 1: if (opcode == 1){
             reg[regno] = operand;
+            //cout << "Case 1" << endl;
             break;
         }
         //Load Register with value from other register value
         case 2: if (opcode == 2){
+            reg[regno] = operand;
+            //cout << "Case 2" << endl;
             break;
         }
         //Load Register with value from memoy address
         case 3: if (opcode == 3){
+            reg[regno] = memory[operand];
+           //cout << "Case 3" << endl;
             break;
         }
         //Store value from register to memory address
         case 4: if (opcode == 4){
+            memory[operand] = reg[regno];
+            ///cout << "Case 4" << endl;
             break;
         }
         //Add values from 2 registers into a third register location (integer addition, use this one)
         case 6: if (opcode == 6){
+            reg1 = mask_variable(0xF0, operand);
+            reg2 = mask_variable(0x0F, operand);
+            reg[regno] = reg1 + reg2;
+            //cout << "Case 6" << endl;
             break;
         }
-        //Negate value in register (compliment and +1)
+        //Negate value in register (compliment and +1) - - - come back to this later, should work ok but might need to uwe another method to excplicitly compliment+1
         case 7: if (opcode == 7){
+            reg[regno] = -reg[regno];
+            //cout << "Case 7" << endl;
             break;
         }
         //Shift register right
         case 8: if (opcode == 8){
+            reg[regno] = reg[regno] >> operand;
+            //cout << "Case 8" << endl;
             break;
         }
         //Shift register left
         case 9: if (opcode == 9){
+            reg[regno] = reg[regno] << operand;
+            //cout << "Case 9" << endl;
             break;
         }
         //AND results of binary AND into third register
         case 10: if (opcode == 0xA){
+            reg1 = mask_variable(0xF0, operand);
+            reg2 = mask_variable(0x0F, operand);
+            reg[regno] = reg1 & reg2;
+            //cout << "Case A" << endl;
             break;
         }
         //OR results of binary OR into third register
         case 11: if (opcode == 0xB){
+            reg1 = mask_variable(0xF0, operand);
+            reg2 = mask_variable(0x0F, operand);
+            reg[regno] = reg1 | reg2;
+            //cout << "Case B" << endl;
             break;
         }
         //XOR results of binary XOR into third register
         case 12: if (opcode == 0xC){
+            reg1 = mask_variable(0xF0, operand);
+            reg2 = mask_variable(0x0F, operand);
+            reg[regno] = reg1 ^ reg2;
+            //cout << "Case C" << endl;
             break;
         }
         //Jump to PC[] if X matches Y
         case 13: if (opcode == 0xD){
+            if (reg[regno] = reg[0]){
+                pc = operand;
+            }
+            //cout << "Case D" << endl;
             break;
         }
         //Exit
         case 14: if (opcode == 0xE){
-            break;
+            //cout << "Case E" << endl;
+            exit;
         }
     }
 }
 
-void instruction_class::print(int i){
+void instruction_class::print(int count){
     int i;
     //for (i = 0; i < pc; i++){
-        ir = memory[i];
+        ir = memory[count];
         cout << "PC: ";
         cout.fill('0'); 
         cout.width(2);
@@ -364,4 +404,4 @@ void instruction_class::print(int i){
         cout << right << reg[i]  << endl;
         //Expected output - PC: 00 IR: 100A Register R0 = 000A
     ////}
-}
+}///

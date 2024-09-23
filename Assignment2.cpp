@@ -199,7 +199,7 @@ using namespace std;
 
 int memory[256];
 int reg[16]; // note: "register" is a reserved word
-int pc, ir, used;
+int pc, ir, lrg;
 
 void getprogram(), print_results();
 int mask_variable(int mask,unsigned int value), opcode(int value);
@@ -219,29 +219,27 @@ class instruction_class{
 instruction_class instruction;
 
 int main(){ // use pc instead of an i counter or it'll run through every line even if there is a jump
-    int i;
+    //int i;
     getprogram();
-    for (i = 0; i < pc; i++){
-        cout << "PC is " << pc << endl;
-        instruction.loaddata(memory[i]);
+    pc = 0;
+    //for (i = 0; i < lrg; i++){ //PC and i won't always match, this might not be the right way to approach this - definitely where the whole thing is fucking up
+    while (pc >= 0){
+        //cout << "PC is " << pc << endl;
+        instruction.loaddata(memory[pc]);
         instruction.calculate();
-        instruction.print(i);
-        i++;
     }
 }
 
 /////////////////////////////////functions//////////////////////////////////////////
 //load the program from a text file into memory
-//this will take up as many memory addresses as there are lines of text,create a global 'used' variable so we can check that the instructions being passed do not include any addresses that are in use already
-//also for error checking if there is no E (halt) but lines have run out
-//given that the first digit is used for opcode and second for the register address, is this the right place to convert from hex to decimal? - yes, not allowed to read strings outside of the file name
+//this will take up as many memory addresses as there are lines of text
 void getprogram(){
     int i;
     string filename;
     fstream program;
     cout << "Enter the file name of the MASSEY machine code: " << endl;
     cin >> filename;
-    //filename = "test.txt";////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////swap these lines over after testing
+    //filename = "test3.txt";////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////swap these lines over after testing
     program.open(filename.c_str(), fstream::in);
     if (program.is_open() == false) {
         cout << "ERROR: not able to open " << filename << endl;
@@ -261,7 +259,7 @@ void getprogram(){
             //cout << "Memory: " << memory[i] << endl;
             i++; 
         }
-        pc = i;
+        lrg = i;
         //cout << "used: " << pc << endl;
         // cout << "Memory: " << memory[5] << endl;
     }    
@@ -285,7 +283,8 @@ void instruction_class::loaddata(int command){
         operand = mask_variable(0x00FF, command);
     }
     else{
-        opcode = mask_variable(0xFF00, command) >> 8;
+        //cout << "weird stuff in here" << endl;
+        //opcode = mask_variable(0xFF00, command) >> 8;
         regno = mask_variable(0x0F0, command) >> 4;
         operand = mask_variable(0x000F, command);
     }
@@ -294,31 +293,60 @@ void instruction_class::loaddata(int command){
 //     cout << "operand is " << operand << endl;
 }
 
-void instruction_class::calculate(){ //////////////////////how tf do I bring the current objewct into the method??
+void instruction_class::calculate(){
     int reg1, reg2;
     switch (opcode){
+         case 0: if (opcode == 0){
+            reg[regno] = operand;
+            //cout << "Case 0" << endl;
+            instruction.print(pc);
+            pc ++;
+            break;
+        }
         //Load Register with value (last 2 digits as hex)
         case 1: if (opcode == 1){
             reg[regno] = operand;
             //cout << "Case 1" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //Load Register with value from other register value
         case 2: if (opcode == 2){
-            reg[regno] = operand;
+            reg[regno] = reg[operand];
             //cout << "Case 2" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //Load Register with value from memoy address
         case 3: if (opcode == 3){
             reg[regno] = memory[operand];
-           //cout << "Case 3" << endl;
+            //cout << "Case 3" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //Store value from register to memory address
         case 4: if (opcode == 4){
+            //cout << "Operand is: " << operand << endl;
             memory[operand] = reg[regno];
-            ///cout << "Case 4" << endl;
+            cout << "PC: ";
+            cout.fill('0'); 
+            cout.width(2);
+            cout << right << pc;
+            cout << " IR: ";
+            cout.fill('0'); 
+            cout.width(4);
+            cout << right << memory[pc];
+            cout << " Memory [";
+            cout.fill('0'); 
+            cout.width(2);
+            cout << operand << "] = ";
+            cout.fill('0'); 
+            cout.width(4);
+            cout << right << memory[operand] << endl;
+            pc ++;
             break;
         }
         //Add values from 2 registers into a third register location (integer addition, use this one)
@@ -327,24 +355,42 @@ void instruction_class::calculate(){ //////////////////////how tf do I bring the
             reg2 = mask_variable(0x0F, operand);
             reg[regno] = reg1 + reg2;
             //cout << "Case 6" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
-        //Negate value in register (compliment and +1) - - - come back to this later, should work ok but might need to uwe another method to excplicitly compliment+1
+        //Negate value in register (compliment and +1) - - - come back to this later, should work ok but might need to uwe another method to excplicitly compliment+1 --  ok, this one is a right cunt!
         case 7: if (opcode == 7){
-            reg[regno] = -reg[regno];
-            //cout << "Case 7" << endl;
-            break;
+            //cout << "reg: " << reg[regno] << endl;
+            if (reg[regno] == 0){
+                pc ++;
+                break;
+            }
+            else{
+                //cout << "non-zero value" << endl;
+                reg[regno] = 0 - reg[regno];
+                reg[regno] = mask_variable(0xFFFF, reg[regno]);
+                //cout << "value: " << reg[regno] << endl;
+                //cout << "Case 7" << endl;
+                instruction.print(pc);
+                pc ++;
+                break;
+            }
         }
         //Shift register right
         case 8: if (opcode == 8){
             reg[regno] = reg[regno] >> operand;
             //cout << "Case 8" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //Shift register left
         case 9: if (opcode == 9){
             reg[regno] = reg[regno] << operand;
             //cout << "Case 9" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //AND results of binary AND into third register
@@ -353,6 +399,8 @@ void instruction_class::calculate(){ //////////////////////how tf do I bring the
             reg2 = mask_variable(0x0F, operand);
             reg[regno] = reg1 & reg2;
             //cout << "Case A" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //OR results of binary OR into third register
@@ -361,6 +409,8 @@ void instruction_class::calculate(){ //////////////////////how tf do I bring the
             reg2 = mask_variable(0x0F, operand);
             reg[regno] = reg1 | reg2;
             //cout << "Case B" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
         //XOR results of binary XOR into third register
@@ -369,39 +419,60 @@ void instruction_class::calculate(){ //////////////////////how tf do I bring the
             reg2 = mask_variable(0x0F, operand);
             reg[regno] = reg1 ^ reg2;
             //cout << "Case C" << endl;
+            instruction.print(pc);
+            pc ++;
             break;
         }
-        //Jump to PC[] if X matches Y
+        //Jump to pc[#] if X matches reg[00]
         case 13: if (opcode == 0xD){
-            if (reg[regno] = reg[0]){
+            if (reg[regno] == reg[0]){
+                cout << "PC: ";
+                cout.fill('0'); 
+                cout.width(2);
+                cout << right << pc;
+                cout << " IR: ";
+                cout.fill('0'); 
+                cout.width(4);
+                cout << right << memory[pc];
                 pc = operand;
+                cout << " TRUE - jump to location ";
+                cout.fill('0'); 
+                cout.width(2);
+                cout << pc << endl;
             }
-            //cout << "Case D" << endl;
+            else{
+                cout << "false - continuing" << endl;
+                pc ++;
+            }
             break;
         }
-        //Exit
         case 14: if (opcode == 0xE){
             //cout << "Case E" << endl;
-            exit;
+            cout << "PC: ";
+            cout.fill('0'); 
+            cout.width(2);
+            cout << right << pc;
+            cout << " IR: ";
+            cout.fill('0'); 
+            cout.width(4);
+            cout << right << memory[pc];
+            cout << " Program halts" << endl;
+            pc = -1;
         }
     }
 }
 
 void instruction_class::print(int count){
-    int i;
-    //for (i = 0; i < pc; i++){
-        ir = memory[count];
-        cout << "PC: ";
-        cout.fill('0'); 
-        cout.width(2);
-        cout << right << pc;
-        cout << " IR: ";
-        cout.fill('0'); 
-        cout.width(4);
-        cout << right << memory[i] << "  Register R" << i << " = " ;
-        cout.fill('0'); 
-        cout.width(4);
-        cout << right << reg[i]  << endl;
-        //Expected output - PC: 00 IR: 100A Register R0 = 000A
-    ////}
-}///
+    ir = memory[count];
+    cout << "PC: ";
+    cout.fill('0'); 
+    cout.width(2);
+    cout << right << pc;
+    cout << " IR: ";
+    cout.fill('0'); 
+    cout.width(4);
+    cout << right << memory[count] << " Register R" << regno << " = " ;
+    cout.fill('0'); 
+    cout.width(4);
+    cout << right << reg[regno]  << endl;
+}

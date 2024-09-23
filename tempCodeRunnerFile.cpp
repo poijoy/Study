@@ -1,4 +1,3 @@
-    cout << "opcode is " << opcode << endl;
-//     cout << "regno is " << regno << endl;
-//     cout << "operand is " << operand << endl;
-// }
+            cout.fill('0'); 
+            cout.width(4);
+            cout << right << memory[pc];

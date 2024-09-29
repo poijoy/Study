@@ -1,5 +1,5 @@
 /*
-Ben Moores 
+Ben Moores
 23016063
 168147832
 
@@ -125,7 +125,7 @@ Notes about the output:
     think about how to display negative numbers, don’t waste time on this aspect.
 (Hint: to start with, get your program reading the file, loading instructions into the memory, and then
 displaying the memory locations and the instructions – first part of the output. Once this is working, then
-expand the output to display the results of the instructions.) 
+expand the output to display the results of the instructions.)
 
 //opcodes - decide which methods/functions to run - colum, a
 1 - Load Register with value (last 2 digits as hex)
@@ -249,20 +249,20 @@ void getprogram(){
             memory[i] = ir;
             //cout << "hexnumber: " << hexnumber << endl;
             cout << "Memory[";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(2);
             cout << right << i << "] = ";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(4);
             cout << right << uppercase << hex << ir << endl;
             // instruction.loaddata(ir);
             //cout << "Memory: " << memory[i] << endl;
-            i++; 
+            i++;
         }
         lrg = i;
         //cout << "used: " << pc << endl;
         // cout << "Memory: " << memory[5] << endl;
-    }    
+    }
 }
 
 //get the value from each column, 0 to ignore, 1 to retrieve
@@ -296,7 +296,7 @@ void instruction_class::loaddata(int command){
 void instruction_class::calculate(){
     int reg1, reg2;
     switch (opcode){
-         case 0: if (opcode == 0){
+        case 0: if (opcode == 0){
             reg[regno] = operand;
             //cout << "Case 0" << endl;
             instruction.print(pc);
@@ -332,18 +332,18 @@ void instruction_class::calculate(){
             //cout << "Operand is: " << operand << endl;
             memory[operand] = reg[regno];
             cout << "PC: ";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(2);
             cout << right << pc;
             cout << " IR: ";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(4);
             cout << right << memory[pc];
             cout << " Memory [";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(2);
             cout << operand << "] = ";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(4);
             cout << right << memory[operand] << endl;
             pc ++;
@@ -427,16 +427,16 @@ void instruction_class::calculate(){
         case 13: if (opcode == 0xD){
             if (reg[regno] == reg[0]){
                 cout << "PC: ";
-                cout.fill('0'); 
+                cout.fill('0');
                 cout.width(2);
                 cout << right << pc;
                 cout << " IR: ";
-                cout.fill('0'); 
+                cout.fill('0');
                 cout.width(4);
                 cout << right << memory[pc];
                 pc = operand;
                 cout << " TRUE - jump to location ";
-                cout.fill('0'); 
+                cout.fill('0');
                 cout.width(2);
                 cout << pc << endl;
             }
@@ -449,11 +449,11 @@ void instruction_class::calculate(){
         case 14: if (opcode == 0xE){
             //cout << "Case E" << endl;
             cout << "PC: ";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(2);
             cout << right << pc;
             cout << " IR: ";
-            cout.fill('0'); 
+            cout.fill('0');
             cout.width(4);
             cout << right << memory[pc];
             cout << " Program halts" << endl;
@@ -465,14 +465,14 @@ void instruction_class::calculate(){
 void instruction_class::print(int count){
     ir = memory[count];
     cout << "PC: ";
-    cout.fill('0'); 
+    cout.fill('0');
     cout.width(2);
     cout << right << pc;
     cout << " IR: ";
-    cout.fill('0'); 
+    cout.fill('0');
     cout.width(4);
     cout << right << memory[count] << " Register R" << regno << " = " ;
-    cout.fill('0'); 
+    cout.fill('0');
     cout.width(4);
     cout << right << reg[regno]  << endl;
 }
